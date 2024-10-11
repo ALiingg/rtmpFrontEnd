@@ -244,7 +244,7 @@ export default {
     const flvPlayers = ref([]);
     const showLoginDialog = ref(false);
     const isLogin = ref(false);
-    const baseUrl = "http://142.115.58.62:8084";
+    const baseUrl = "http://localhost:8080";
     let urls = new Array(4);
     const getUrl = () => {
       axios.get(baseUrl + "/live").then((response) => {
