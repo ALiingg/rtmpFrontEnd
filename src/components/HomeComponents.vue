@@ -1,8 +1,9 @@
 <template>
   <el-row :gutter="20" class="main-container">
-    <!-- 左边实时语音 -->
+    <!-- Left side: Real-time voice interaction container -->
     <el-col :span="6" class="real-time-voice-container">
       <div class="real-time-voice">
+        <!-- Login container for user authentication -->
         <div class="login-container" v-show="!isLogin">
           <el-button type="warning" @click="showLoginDialog = true">Login</el-button>
           <el-drawer
@@ -11,9 +12,10 @@
             size="40%"
             direction="ltr"
             :before-close="handleClose"
-
           >
+            <!-- Tabs for switching between Login and Register -->
             <el-tabs v-model="activeTab" v-loading="loginLoading">
+              <!-- Login tab -->
               <el-tab-pane label="Login" name="login">
                 <el-form :model="loginForm" label-width="80px">
                   <el-form-item label="Username">
@@ -25,7 +27,7 @@
                   <el-button type="primary" @click="handleLogin">Login</el-button>
                 </el-form>
               </el-tab-pane>
-
+              <!-- Register tab -->
               <el-tab-pane label="Register" name="register">
                 <el-form :model="registerForm" label-width="80px">
                   <el-form-item label="Username">
@@ -44,9 +46,11 @@
           </el-drawer>
         </div>
 
+        <!-- Room box for real-time voice channel if user is logged in -->
         <div class="room-box" v-show="isLogin">
           <h3 class="room-title">Voice Channel</h3>
           <ul class="user-list">
+            <!-- Display list of users in the voice channel -->
             <li v-for="user in rooms[0].users" :key="user" :class="{ 'self-user': user === currentUser }">
               <span :style="{ 'margin-left': user === currentUser ? '0' : '20px' }">{{ user }}</span>
             </li>
@@ -56,90 +60,109 @@
           </div>
           <div class="control-icons">
             <el-icon>
+              <!-- Microphone icon for mute/unmute functionality -->
               <microphone v-show="!muted" @click="muteChange"/>
-
-              <mute  v-show="muted" @click="muteChange"/>
+              <mute v-show="muted" @click="muteChange"/>
             </el-icon>
             <el-icon>
+              <!-- Headset icon -->
               <headset/>
-
             </el-icon>
             <el-tooltip
               content="<span>HangUp</span>"
               raw-content
-            ><el-icon><Phone @click="leaveChannel('room1')"/></el-icon>
+            >
+              <el-icon><Phone @click="leaveChannel('room1')"/></el-icon>
             </el-tooltip>
           </div>
         </div>
       </div>
     </el-col>
 
-    <!-- 右边直播框 -->
+    <!-- Right side: Live streaming video containers -->
     <el-col :span="18" class="live-container">
       <el-row :gutter="20">
+        <!-- Each video element wrapped in a draggable and resizable container -->
         <el-col :span="12">
-          <div class="live-box">
-            <video id="videoElement1" controls style="width:100%;height:100%;" autoplay/>
-          </div>
+          <Vue3DraggableResizable
+            :initW="600"
+            :initH="400"
+            v-model:x="x2"
+            v-model:y="y2"
+            v-model:w="w2"
+            v-model:h="h2"
+            v-model:active="active"
+            :draggable="true"
+            :resizable="true"
+            @activated="console.log('activated')"
+            @deactivated="console.log('deactivated')"
+            @drag-start="console.log('drag-start')"
+            @resize-start="console.log('resize-start')"
+            @dragging="console.log('dragging')"
+            @resizing="console.log('resizing')"
+            @drag-end="console.log('drag-end')"
+            @resize-end="console.log('resize-end')"
+          >
+            <div class="live-box">
+              <video id="videoElement1" controls style="width:100%;height:100%;" autoplay/>
+            </div>
+          </Vue3DraggableResizable>
         </el-col>
-        <el-col :span="12">
-          <div class="live-box">
-            <video id="videoElement2" controls style="width:100%;height:100%;" autoplay/>
-          </div>
-        </el-col>
-      </el-row>
-      <el-row :gutter="20" style="margin-top: 20px;">
-        <el-col :span="12">
-          <div class="live-box">
-            <video id="videoElement3" controls style="width:100%;height:100%;" autoplay/>
-          </div>
-        </el-col>
-        <el-col :span="12">
-          <div class="live-box">
-            <video id="videoElement4" controls style="width:100%;height:100%;" autoplay muted/>
-          </div>
-        </el-col>
+
+        <!-- Additional video containers for other video feeds, duplicated as needed -->
       </el-row>
     </el-col>
   </el-row>
 </template>
 
 <style scoped src="@/components/css/HomeComponents.css">
-
-
 </style>
 
 <script>
 import flvjs from 'flv.js';
 import mpegtsjs from 'mpegts.js';
 import Cookies from 'js-cookie';
-import { onMounted, reactive, ref } from 'vue'
-import { Headset, Microphone, Mute } from '@element-plus/icons-vue'
-import axios  from 'axios'
-import { mapState, mapMutations, useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import { onMounted, reactive, ref } from 'vue';
+import { Headset, Microphone, Mute } from '@element-plus/icons-vue';
+import axios from 'axios';
+import { mapState, mapMutations, useStore } from 'vuex';
+import { ElMessage } from 'element-plus';
+import Vue3DraggableResizable from 'vue3-draggable-resizable';
+
 export default {
   computed: {
-    ...mapState(['isLogin'])
+    ...mapState(['isLogin']) // Retrieve login status from Vuex state
   },
   methods: {
     ...mapMutations(['setLogin']),
+
+    /**
+     * Toggles the mute state.
+     * @return Updated mute state (boolean)
+     */
     muteChange() {
       this.muted = !this.muted;
       console.log(this.muted);
     },
+
+    /**
+     * Leaves the specified voice channel.
+     * @param roomId Unique identifier of the room
+     * @return void
+     */
     leaveChannel(roomId) {
-      // 找到当前的房间
       const room = this.rooms.find(room => room.id === roomId);
-
       if (room) {
-        // 移除当前用户
         room.users = room.users.filter(user => user !== this.currentUser);
-
-        // 如果需要执行离开房间后的操作，可以在这里添加
-        console.log(`${this.currentUser} 离开了房间 ${room.name}`);
+        console.log(`${this.currentUser} left the room ${room.name}`);
       }
     },
+
+    /**
+     * Joins the specified voice channel.
+     * @param roomId Unique identifier of the room
+     * @return void
+     */
     joinRoom(roomId) {
       this.rooms.forEach(room => {
         if (room.id === roomId && !room.users.includes(this.currentUser)) {
@@ -148,78 +171,79 @@ export default {
       });
     }
   },
-  components: { Mute, Headset, Microphone },
+  components: { Mute, Headset, Microphone, Vue3DraggableResizable },
   setup() {
-    const loginForm = reactive({
-      name: '',
-      password: ''
-
-    })
-    const registerForm = reactive({
-      username: '',
-      password: '',
-      confirmPassword:''
-    })
+    // Reactive forms for login and registration
+    const loginForm = reactive({ name: '', password: '' });
+    const registerForm = reactive({ username: '', password: '', confirmPassword: '' });
     const loginLoading = ref(useStore().state.loginLoading);
     const activeTab = ref('login');
     const flvPlayers = ref([]);
     const showLoginDialog = ref(useStore().state.showLoginDialog);
-    const baseUrl = useStore().state.baseUrl
-    // const isLogin = ref(false);
+    const baseUrl = useStore().state.baseUrl;
     let urls = new Array(4);
+
+    /**
+     * Fetches video stream URLs from the server.
+     * Initializes video players for each URL.
+     * @return void
+     */
     const getUrl = () => {
-      axios.get( baseUrl + "/live").then((response) => {
-        console.log(response.data);
+      axios.get(baseUrl + "/live").then((response) => {
         urls = response.data;
         flvPlayers.value.push(createVideo('videoElement1', urls[0]));
         flvPlayers.value.push(createVideo('videoElement2', urls[1]));
         flvPlayers.value.push(createVideo('videoElement3', urls[2]));
         flvPlayers.value.push(createVideo('videoElement4', urls[3]));
-        console.log(urls[0]);
-      })
+      });
+    };
 
-    }
-
-
+    /**
+     * Handles the user login operation.
+     * @return void
+     */
     const handleLogin = () => {
       loginLoading.value = true;
       axios({
         method: 'post',
         url: baseUrl + '/user/login?uname=' + loginForm.name + "&password=" + loginForm.password,
-
       }).then(res => {
-        console.log(res.data);
-        Cookies.set('token', res.data.data.token, { expires: 1, path: '' })
-        setTimeout(function() {
+        Cookies.set('token', res.data.data.token, { expires: 1, path: '' });
+        setTimeout(() => {
           ElMessage({
             message: 'Login Success',
             type: 'success',
-          })
-          loginLoading.value = false;
-        }, 1000)
-        setTimeout(function() {
+          });
+        }, 1000);
+        setTimeout(() => {
           successLogin();
-        }, 2000)
-
-      }).catch(error => {
-        setTimeout(function() {
+        }, 2000);
+      }).catch(() => {
+        setTimeout(() => {
           ElMessage({
             message: "Username or Password Incorrect",
             type: 'error'
-          })
-          loginLoading.value = false;
-        },2000)
+          });
+        }, 2000);
+      }).finally(() => {
+        loginLoading.value = false;
+      });
+    };
 
-
-
-      })
-
-      // Cookies.set('test','123', {expires: 3, path:''});
-    }
+    /**
+     * Handles the user registration operation.
+     * @return void
+     */
     const handleRegister = () => {
+      // Registration logic can be added here
+    };
 
-    }
-
+    /**
+     * Creates a video player with a specified video element ID and stream URL.
+     * @param videoId ID of the video element
+     * @param streamUrl URL of the video stream
+     * @return Instance of the FLV player or a warning if not supported
+     */
     const createVideo = (videoId, streamUrl) => {
       const videoElement = document.getElementById(videoId);
       if (mpegtsjs.isSupported()) {
@@ -242,14 +266,23 @@ export default {
       }
     };
 
-    onMounted(async () => {
-      await getUrl();
-      // await checkLogin();
-    });
-
+    /**
+     * Closes the login dialog.
+     * @return void
+     */
     const handleClose = () => {
       showLoginDialog.value = false;
-    }
+    };
+
+    /**
+     * Runs when the component is mounted.
+     * Calls getUrl to initialize video streams.
+     * @return void
+     */
+    onMounted(async () => {
+      await getUrl();
+    });
+
     return {
       loginForm,
       registerForm,
@@ -263,9 +296,27 @@ export default {
   },
   data() {
     return {
-
+      // Position and dimensions for draggable and resizable video components
+      x: 800,
+      y: 15,
+      h: 600,
+      w: 400,
+      x2: 15,
+      y2: 15,
+      h2: 600,
+      w2: 400,
+      x3: 800,
+      y3: 400,
+      h3: 600,
+      w3: 400,
+      x4: 15,
+      y4: 400,
+      h4: 600,
+      w4: 400,
+      active: false,
       muted: false,
       currentUser: 'You',
+      // Initial room setup for the voice channel
       rooms: [
         {
           id: 'room1',
@@ -275,7 +326,5 @@ export default {
       ]
     };
   },
-
-
 };
 </script>

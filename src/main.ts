@@ -8,52 +8,62 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { createStore, useStore } from 'vuex'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import axios from 'axios'
+import Vue3DraggableResizable from 'vue3-draggable-resizable'
+//default styles
+import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
 import Cookies from 'js-cookie'
 const app = createApp(App)
+
+// Create Vuex store for centralized state management
 const store = createStore({
+  // State variables to manage login status, URLs, and dialog visibility
   state() {
     return {
-      isLogin: false,
-      baseUrl: 'http://localhost:8080',
-      showLoginDialog: false,
-      loginLoading: false
+      isLogin: false, // Login status of the user
+      baseUrl: 'http://eastscloud.tech:1000', // Base URL for API requests
+      showLoginDialog: false, // Control visibility of login dialog
+      loginLoading: false, // Track loading state during login
+      fileBaseUrl: 'http://eastscloud.tech:8008/replays' // Base URL for file access
     }
   },
   mutations: {
+    // Generic mutation to update state values
     setStateValue(state, { key, value }) {
-      state[key] = value;
-
-
+      state[key] = value; // Dynamically set a state variable with a key-value pair
     },
-
   },
-
 })
+
+// Set up Vue Router to handle different pages in the app
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(), // Use HTML5 history mode for navigation
   routes: [
     {
-      path: '/',
+      path: '/', // Route for the home page
       name: 'Home',
-      component: index
+      component: index // Component to render for the home page
     },
     {
-      path: '/replays',
+      path: '/replayList', // Route for the replay list page
       name: 'Replays',
-      component: StreamComponents
+      component: StreamComponents // Component to render for the replay list
     }
   ]
-});
+})
 
-app.use(router);
+// Register Vue Router with the app
+app.use(router)
 
-// main.ts
-// 如果您正在使用CDN引入，请删除下面一行。
-
+// Register all ElementPlus icons globally
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
+  app.component(key, component) // Register each icon as a component
 }
-app.use(store)
-app.use(ElementPlus)
+
+// Register Vuex store and other plugins with the app
+app.use(store) // Use the Vuex store for state management
+app.use(Vue3DraggableResizable) // Use the draggable and resizable component
+app.use(ElementPlus) // Use ElementPlus for UI components
+
+// Mount the app to the HTML element with id 'app'
 app.mount('#app')
