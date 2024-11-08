@@ -107,8 +107,86 @@
               <video id="videoElement1" controls style="width:100%;height:100%;" autoplay/>
             </div>
           </Vue3DraggableResizable>
-        </el-col>
 
+        </el-col>
+        <el-col :span="12">
+          <Vue3DraggableResizable
+            :initW="600"
+            :initH="400"
+            v-model:x="x"
+            v-model:y="y"
+            v-model:w="w"
+            v-model:h="h"
+            v-model:active="active"
+            :draggable="true"
+            :resizable="true"
+            @activated="console.log('activated')"
+            @deactivated="console.log('deactivated')"
+            @drag-start="console.log('drag-start')"
+            @resize-start="console.log('resize-start')"
+            @dragging="console.log('dragging')"
+            @resizing="console.log('resizing')"
+            @drag-end="console.log('drag-end')"
+            @resize-end="console.log('resize-end')"
+          >
+            <div class="live-box">
+              <video id="videoElement2" controls style="width:100%;height:100%;" autoplay/>
+            </div>
+          </Vue3DraggableResizable>
+
+        </el-col>
+        <el-col :span="12">
+          <Vue3DraggableResizable
+            :initW="600"
+            :initH="400"
+            v-model:x="x3"
+            v-model:y="y3"
+            v-model:w="w3"
+            v-model:h="h3"
+            v-model:active="active"
+            :draggable="true"
+            :resizable="true"
+            @activated="console.log('activated')"
+            @deactivated="console.log('deactivated')"
+            @drag-start="console.log('drag-start')"
+            @resize-start="console.log('resize-start')"
+            @dragging="console.log('dragging')"
+            @resizing="console.log('resizing')"
+            @drag-end="console.log('drag-end')"
+            @resize-end="console.log('resize-end')"
+          >
+            <div class="live-box">
+              <video id="videoElement3" controls style="width:100%;height:100%;" autoplay/>
+            </div>
+          </Vue3DraggableResizable>
+
+        </el-col>
+        <el-col :span="12">
+          <Vue3DraggableResizable
+            :initW="600"
+            :initH="400"
+            v-model:x="x4"
+            v-model:y="y4"
+            v-model:w="w4"
+            v-model:h="h4"
+            v-model:active="active"
+            :draggable="true"
+            :resizable="true"
+            @activated="console.log('activated')"
+            @deactivated="console.log('deactivated')"
+            @drag-start="console.log('drag-start')"
+            @resize-start="console.log('resize-start')"
+            @dragging="console.log('dragging')"
+            @resizing="console.log('resizing')"
+            @drag-end="console.log('drag-end')"
+            @resize-end="console.log('resize-end')"
+          >
+            <div class="live-box">
+              <video id="videoElement4" controls style="width:100%;height:100%;" autoplay/>
+            </div>
+          </Vue3DraggableResizable>
+
+        </el-col>
         <!-- Additional video containers for other video feeds, duplicated as needed -->
       </el-row>
     </el-col>
@@ -191,6 +269,7 @@ export default {
     const getUrl = () => {
       axios.get(baseUrl + "/live").then((response) => {
         urls = response.data;
+        console.log(urls)
         flvPlayers.value.push(createVideo('videoElement1', urls[0]));
         flvPlayers.value.push(createVideo('videoElement2', urls[1]));
         flvPlayers.value.push(createVideo('videoElement3', urls[2]));

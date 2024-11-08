@@ -1,4 +1,10 @@
 <script>
+import index, { mapMutations, useStore } from 'vuex'
+import { onMounted, ref } from 'vue'
+import Cookies from 'js-cookie'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
+
 export default {
   methods: {
     ...mapMutations(['checkLogin']), // Map Vuex mutation to check login status
@@ -69,6 +75,7 @@ export default {
     return {
       activeIndex, // Currently active menu item index
       index, // Home component
+
     };
   },
 };

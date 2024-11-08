@@ -41,7 +41,12 @@
   </el-tabs>
 </template>
 
+
 <script lang="ts">
+import { onMounted, ref } from 'vue'
+import axios from 'axios'
+import { useStore } from 'vuex'
+
 export default {
   components: {
     // Component-specific imports go here if needed
