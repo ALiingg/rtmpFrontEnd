@@ -21,7 +21,7 @@ const store = createStore({
   state() {
     return {
       isLogin: false, // Login status of the user
-      baseUrl: 'http://eastscloud.tech:1000', // Base URL for API requests
+      baseUrl: 'http://180.158.200.56:1000', // Base URL for API requests
       showLoginDialog: false, // Control visibility of login dialog
       loginLoading: false, // Track loading state during login
       fileBaseUrl: 'http://eastscloud.tech:8008/replays' // Base URL for file access

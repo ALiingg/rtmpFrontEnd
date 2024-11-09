@@ -10,7 +10,9 @@
       </template>
 
       <!-- Download button to trigger file downloads for selected rows -->
-      <el-button type="primary" style="margin-bottom: 10px" @click="handleDownload">Download</el-button>
+      <el-button type="primary" style="margin-bottom: 10px" @click="handleDownload"
+        >Download</el-button
+      >
 
       <!-- Table displaying the replays data -->
       <el-table :data="tableDataGet" style="width: 100%" @selection-change="handleSelectionChange">
@@ -18,7 +20,19 @@
         <el-table-column type="selection" width="55" />
 
         <!-- Stream Number column -->
-        <el-table-column label="StreamNo" width="100" show-overflow-tooltip>
+        <el-table-column
+          label="StreamNo"
+          width="100"
+          show-overflow-tooltip
+          :filters="[
+            { text: '1', value: '1' },
+            { text: '2', value: '2' },
+            { text: '3', value: '3' },
+            { text: '4', value: '4' }
+          ]"
+          :filter-method="filterStreamNo"
+          filtered-value=""
+        >
           <template #default="scope">{{ scope.row[1] }}</template>
         </el-table-column>
 
@@ -41,7 +55,6 @@
   </el-tabs>
 </template>
 
-
 <script lang="ts">
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
@@ -53,47 +66,53 @@ export default {
   },
   setup() {
     // State variable to track loading status
-    const isLoading = ref(false);
+    const dateFilters = ref([]);
+    const isLoading = ref(false)
 
     // Array to hold selected rows from the table
-    const selectedRows = ref([]);
+    const selectedRows = ref([])
 
     // Array to store data fetched from the server for the replays
-    const tableDataGet = ref([[] as tableDataGet[]]);
+    const tableDataGet = ref([[] as tableDataGet[]])
 
     // Sample data for the table (used if needed for testing)
     const tableData: User[] = [
-      { datetime: '2016-05-04 15:12', StreamNo: "1", filename: 'Aleyna Kutzner', filesize: '100MB' },
-      { datetime: '2016-05-03', StreamNo: "1", filename: 'Helen Jacobi', filesize: '200MB' },
-      { datetime: '2016-05-02', StreamNo: "1", filename: 'Brandon Deckert', filesize: '150MB' },
-      { datetime: '2016-05-01', StreamNo: "1", filename: 'Margie Smith', filesize: '120MB' },
-    ];
+      {
+        datetime: '2016-05-04 15:12',
+        StreamNo: '1',
+        filename: 'Aleyna Kutzner',
+        filesize: '100MB'
+      },
+      { datetime: '2016-05-03', StreamNo: '1', filename: 'Helen Jacobi', filesize: '200MB' },
+      { datetime: '2016-05-02', StreamNo: '1', filename: 'Brandon Deckert', filesize: '150MB' },
+      { datetime: '2016-05-01', StreamNo: '1', filename: 'Margie Smith', filesize: '120MB' }
+    ]
 
     /**
      * Fetches replays data from the server and populates `tableDataGet`.
      * Sets the loading state while the request is in progress.
      */
     const getReplays = () => {
-      isLoading.value = true;
+      isLoading.value = true
       axios({
         method: 'get',
-        url: useStore().state.baseUrl + '/fetchreplays',
-      }).then(res => {
-        tableDataGet.value = res.data; // Populate the table data with response
-        isLoading.value = false; // Stop loading indicator
-      });
-    };
+        url: useStore().state.baseUrl + '/fetchreplays'
+      }).then((res) => {
+        tableDataGet.value = res.data // Populate the table data with response
+        isLoading.value = false // Stop loading indicator
+      })
+    }
 
-    const store = useStore(); // Access Vuex store instance
+    const store = useStore() // Access Vuex store instance
 
     /**
      * Handles row selection in the table and updates `selectedRows`.
      * @param selection The selected rows from the table
      */
     const handleSelectionChange = (selection) => {
-      selectedRows.value = selection;
-      console.log('Currently selected rows: ', selectedRows.value);
-    };
+      selectedRows.value = selection
+      console.log('Currently selected rows: ', selectedRows.value)
+    }
 
     /**
      * Downloads the files for each selected row by opening the file URL in a new tab.
@@ -101,14 +120,14 @@ export default {
     const handleDownload = () => {
       for (let i = 0; i < selectedRows.value.length; i++) {
         // Construct the download URL for each selected file and open it
-        window.open(store.state.fileBaseUrl + "/" + selectedRows.value[i][0]);
+        window.open(store.state.fileBaseUrl + '/' + selectedRows.value[i][0])
       }
-    };
+    }
 
     // Call getReplays when the component is mounted to load initial data
     onMounted(async () => {
-      await getReplays();
-    });
+      await getReplays()
+    })
 
     // Return state variables and methods to be used in the template
     return {
@@ -117,9 +136,9 @@ export default {
       isLoading,
       handleSelectionChange,
       handleDownload
-    };
+    }
   }
-};
+}
 </script>
 
 <style>
