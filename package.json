@@ -28,7 +28,8 @@
     "vue-draggable-resizable": "^3.0.0",
     "vue-router": "^4.4.5",
     "vue3-draggable-resizable": "^1.6.5",
-    "vuex": "^4.1.0"
+    "vuex": "^4.1.0",
+    "zego-express-engine-webrtc": "^3.7.1"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",

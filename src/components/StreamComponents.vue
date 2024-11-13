@@ -1,5 +1,22 @@
 <template>
   <!-- Tabs with a loading indicator -->
+  <el-date-picker
+    v-model="startDate"
+    type="date"
+    placeholder="Start Date"
+    style="margin-right: 10px;margin-bottom: 10px;margin-top: 10px"
+  />
+  <el-date-picker
+    v-model="endDate"
+    type="date"
+    placeholder="End Date"
+    style="=margin-bottom: 10px;margin-top: 10px"
+
+  />
+
+  <el-button type="primary" style="margin-left: 10px" @click="filterByDateRange">
+    Filter by Date Range
+  </el-button>
   <el-tabs type="border-card" class="demo-tabs" v-loading="isLoading">
     <el-tab-pane>
       <template #label>
@@ -11,8 +28,7 @@
 
       <!-- Download button to trigger file downloads for selected rows -->
       <el-button type="primary" style="margin-bottom: 10px" @click="handleDownload"
-        >Download</el-button
-      >
+        >Download</el-button>
 
       <!-- Table displaying the replays data -->
       <el-table :data="tableDataGet" style="width: 100%" @selection-change="handleSelectionChange">
@@ -59,7 +75,8 @@
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import { useStore } from 'vuex'
-
+import dayjs from 'dayjs';
+const originalData = ref([]);
 export default {
   components: {
     // Component-specific imports go here if needed
@@ -67,6 +84,8 @@ export default {
   setup() {
     // State variable to track loading status
     const dateFilters = ref([]);
+    const startDate = ref(null); // Start date for filtering
+    const endDate = ref(null);   // End date for filtering
     const isLoading = ref(false)
 
     // Array to hold selected rows from the table
@@ -98,12 +117,16 @@ export default {
         method: 'get',
         url: useStore().state.baseUrl + '/fetchreplays'
       }).then((res) => {
-        tableDataGet.value = res.data // Populate the table data with response
+        originalData.value = res.data;
+        tableDataGet.value = [...originalData.value]; // Populate the table data with response
         isLoading.value = false // Stop loading indicator
       })
     }
 
     const store = useStore() // Access Vuex store instance
+    const filterStreamNo = (value, row) => {
+      return row[1] === value;
+    };
 
     /**
      * Handles row selection in the table and updates `selectedRows`.
@@ -123,7 +146,24 @@ export default {
         window.open(store.state.fileBaseUrl + '/' + selectedRows.value[i][0])
       }
     }
+    const filterByDateRange = () => {
+      const startTimestamp = startDate.value ? dayjs(startDate.value).startOf('day').valueOf() : null;
+      const endTimestamp = endDate.value ? dayjs(endDate.value).endOf('day').valueOf() : null;
 
+      tableDataGet.value = originalData.value.filter((item) => {
+        const itemDate = dayjs(item[2], 'MMM D HH:mm'); // Adjust date format as needed
+        const itemTimestamp = itemDate.valueOf();
+
+        if (startTimestamp && endTimestamp) {
+          return itemTimestamp >= startTimestamp && itemTimestamp <= endTimestamp;
+        } else if (startTimestamp) {
+          return itemTimestamp >= startTimestamp;
+        } else if (endTimestamp) {
+          return itemTimestamp <= endTimestamp;
+        }
+        return true;
+      });
+    };
     // Call getReplays when the component is mounted to load initial data
     onMounted(async () => {
       await getReplays()
@@ -135,7 +175,11 @@ export default {
       tableDataGet,
       isLoading,
       handleSelectionChange,
-      handleDownload
+      handleDownload,
+      filterStreamNo,
+      filterByDateRange,
+      startDate,
+      endDate
     }
   }
 }

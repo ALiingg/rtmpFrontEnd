@@ -17,6 +17,10 @@
             <el-tabs v-model="activeTab" v-loading="loginLoading">
               <!-- Login tab -->
               <el-tab-pane label="Login" name="login">
+                <el-radio-group v-model="loginMethod">
+                  <el-radio value="1" size="large">Username</el-radio>
+                  <el-radio value="2" size="large">Email</el-radio>
+                </el-radio-group>
                 <el-form :model="loginForm" label-width="80px">
                   <el-form-item label="Username">
                     <el-input v-model="loginForm.name" />
@@ -30,9 +34,20 @@
               <!-- Register tab -->
               <el-tab-pane label="Register" name="register">
                 <el-form :model="registerForm" label-width="80px">
+                  <el-form-item label="Email">
+                    <div style="display: flex; width: 100%">
+                    <el-input v-model="registerForm.email" style="flex: 4; margin-right: 10px" />
+                    <el-button type="info" @click="handelSendCode" style="flex: 1">Send OTP</el-button>
+                    </div>
+                  </el-form-item>
+
+                  <el-form-item label="Verification Code">
+                    <el-input v-model="registerForm.code" />
+                  </el-form-item>
                   <el-form-item label="Username">
                     <el-input v-model="registerForm.username" />
                   </el-form-item>
+
                   <el-form-item label="Password">
                     <el-input type="password" v-model="registerForm.password" />
                   </el-form-item>
@@ -206,10 +221,12 @@ import axios from 'axios';
 import { mapState, mapMutations, useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
 import Vue3DraggableResizable from 'vue3-draggable-resizable';
+import store from 'vue3-draggable-resizable/dist/Vue3DraggableResizable.common.js'
+import {ZegoExpressWebRTMEngine} from 'zego-express-engine-webrtc/sdk/code/zh/zego.client.rtm.js'
 
 export default {
   computed: {
-    ...mapState(['isLogin']) // Retrieve login status from Vuex state
+    // ...mapState(['isLogin']) // Retrieve login status from Vuex state
   },
   methods: {
     ...mapMutations(['setLogin']),
@@ -252,13 +269,16 @@ export default {
   components: { Mute, Headset, Microphone, Vue3DraggableResizable },
   setup() {
     // Reactive forms for login and registration
-    const loginForm = reactive({ name: '', password: '' });
-    const registerForm = reactive({ username: '', password: '', confirmPassword: '' });
-    const loginLoading = ref(useStore().state.loginLoading);
+    const loginForm = reactive({ name: '', password: '', email: ''});
+    const registerForm = reactive({ username: '', password: '', confirmPassword: '', email:'', code: ''});
+    const loginLoading = ref(false);
     const activeTab = ref('login');
     const flvPlayers = ref([]);
-    const showLoginDialog = ref(useStore().state.showLoginDialog);
+    const showLoginDialog = ref(false);
     const baseUrl = useStore().state.baseUrl;
+    const isLogin = ref(false);
+    const loginMethod = ref();
+
     let urls = new Array(4);
 
     /**
@@ -276,7 +296,24 @@ export default {
         flvPlayers.value.push(createVideo('videoElement4', urls[3]));
       });
     };
-
+    const handelSendCode = () => {
+      if(registerForm.email == null || !registerForm.email.includes('@')){
+        ElMessage({
+          message: "Invalid Email",
+          type: "error",
+        })
+        return null;
+      }
+      axios({
+        url: baseUrl + "/sendVerificationCode",
+        method: 'post',
+        params: {
+          email: registerForm.email,
+        }
+      }).then(res => {
+        console.log(res.data);
+      })
+    }
     /**
      * Handles the user login operation.
      * @return void
@@ -293,10 +330,11 @@ export default {
             message: 'Login Success',
             type: 'success',
           });
-        }, 1000);
+        }, 100);
         setTimeout(() => {
           successLogin();
-        }, 2000);
+
+        }, 100);
       }).catch(() => {
         setTimeout(() => {
           ElMessage({
@@ -308,13 +346,20 @@ export default {
         loginLoading.value = false;
       });
     };
-
+    const successLogin = () => {
+      loginLoading.value = false;
+      showLoginDialog.value = false;
+      isLogin.value = true;
+    };
     /**
      * Handles the user registration operation.
      * @return void
      */
     const handleRegister = () => {
       // Registration logic can be added here
+      axios.post(baseUrl + '/user/register', {
+          successLogin
+      })
     };
 
     /**
@@ -371,6 +416,9 @@ export default {
       handleClose,
       showLoginDialog,
       loginLoading,
+      isLogin,
+      loginMethod,
+      handelSendCode
     };
   },
   data() {
