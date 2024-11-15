@@ -4,65 +4,10 @@
     <el-col :span="6" class="real-time-voice-container">
       <div class="real-time-voice">
         <!-- Login container for user authentication -->
-        <div class="login-container" v-show="!isLogin">
-          <el-button type="warning" @click="showLoginDialog = true">Login</el-button>
-          <el-drawer
-            v-model="showLoginDialog"
-            title="User Authentication"
-            size="40%"
-            direction="ltr"
-            :before-close="handleClose"
-          >
-            <!-- Tabs for switching between Login and Register -->
-            <el-tabs v-model="activeTab" v-loading="loginLoading">
-              <!-- Login tab -->
-              <el-tab-pane label="Login" name="login">
-                <el-radio-group v-model="loginMethod">
-                  <el-radio value="1" size="large">Username</el-radio>
-                  <el-radio value="2" size="large">Email</el-radio>
-                </el-radio-group>
-                <el-form :model="loginForm" label-width="80px">
-                  <el-form-item label="Username">
-                    <el-input v-model="loginForm.name" />
-                  </el-form-item>
-                  <el-form-item label="Password">
-                    <el-input type="password" v-model="loginForm.password" />
-                  </el-form-item>
-                  <el-button type="primary" @click="handleLogin">Login</el-button>
-                </el-form>
-              </el-tab-pane>
-              <!-- Register tab -->
-              <el-tab-pane label="Register" name="register">
-                <el-form :model="registerForm" label-width="80px">
-                  <el-form-item label="Email">
-                    <div style="display: flex; width: 100%">
-                    <el-input v-model="registerForm.email" style="flex: 4; margin-right: 10px" />
-                    <el-button type="info" @click="handelSendCode" style="flex: 1">Send OTP</el-button>
-                    </div>
-                  </el-form-item>
 
-                  <el-form-item label="Verification Code">
-                    <el-input v-model="registerForm.code" />
-                  </el-form-item>
-                  <el-form-item label="Username">
-                    <el-input v-model="registerForm.username" />
-                  </el-form-item>
-
-                  <el-form-item label="Password">
-                    <el-input type="password" v-model="registerForm.password" />
-                  </el-form-item>
-                  <el-form-item label="Confirm">
-                    <el-input type="password" v-model="registerForm.confirmPassword" />
-                  </el-form-item>
-                  <el-button type="primary" @click="handleRegister">Register</el-button>
-                </el-form>
-              </el-tab-pane>
-            </el-tabs>
-          </el-drawer>
-        </div>
 
         <!-- Room box for real-time voice channel if user is logged in -->
-        <div class="room-box" v-show="isLogin">
+        <div class="room-box">
           <h3 class="room-title">Voice Channel</h3>
           <ul class="user-list">
             <!-- Display list of users in the voice channel -->
@@ -222,7 +167,9 @@ import { mapState, mapMutations, useStore } from 'vuex';
 import { ElMessage } from 'element-plus';
 import Vue3DraggableResizable from 'vue3-draggable-resizable';
 import store from 'vue3-draggable-resizable/dist/Vue3DraggableResizable.common.js'
-import {ZegoExpressWebRTMEngine} from 'zego-express-engine-webrtc/sdk/code/zh/zego.client.rtm.js'
+import { getElement } from 'element-plus/es/utils/index'
+import { useRouter } from 'vue-router'
+// import {ZegoExpressWebRTMEngine} from 'zego-express-engine-webrtc/sdk/code/zh/zego.client.rtm.js'
 
 export default {
   computed: {
@@ -270,7 +217,7 @@ export default {
   setup() {
     // Reactive forms for login and registration
     const loginForm = reactive({ name: '', password: '', email: ''});
-    const registerForm = reactive({ username: '', password: '', confirmPassword: '', email:'', code: ''});
+    const registerForm = reactive({ username: '', password: '', confirmPassword: '', email:'', code: '', passcode: ''});
     const loginLoading = ref(false);
     const activeTab = ref('login');
     const flvPlayers = ref([]);
@@ -278,7 +225,10 @@ export default {
     const baseUrl = useStore().state.baseUrl;
     const isLogin = ref(false);
     const loginMethod = ref();
-
+    const sendOTPLoading = ref(false);
+    const inputColor = ref("black");
+    const isCountingDown = ref(false);
+    const countdown = ref(60);
     let urls = new Array(4);
 
     /**
@@ -287,6 +237,7 @@ export default {
      * @return void
      */
     const getUrl = () => {
+
       axios.get(baseUrl + "/live").then((response) => {
         urls = response.data;
         console.log(urls)
@@ -296,73 +247,8 @@ export default {
         flvPlayers.value.push(createVideo('videoElement4', urls[3]));
       });
     };
-    const handelSendCode = () => {
-      if(registerForm.email == null || !registerForm.email.includes('@')){
-        ElMessage({
-          message: "Invalid Email",
-          type: "error",
-        })
-        return null;
-      }
-      axios({
-        url: baseUrl + "/sendVerificationCode",
-        method: 'post',
-        params: {
-          email: registerForm.email,
-        }
-      }).then(res => {
-        console.log(res.data);
-      })
-    }
-    /**
-     * Handles the user login operation.
-     * @return void
-     */
-    const handleLogin = () => {
-      loginLoading.value = true;
-      axios({
-        method: 'post',
-        url: baseUrl + '/user/login?uname=' + loginForm.name + "&password=" + loginForm.password,
-      }).then(res => {
-        Cookies.set('token', res.data.data.token, { expires: 1, path: '' });
-        setTimeout(() => {
-          ElMessage({
-            message: 'Login Success',
-            type: 'success',
-          });
-        }, 100);
-        setTimeout(() => {
-          successLogin();
 
-        }, 100);
-      }).catch(() => {
-        setTimeout(() => {
-          ElMessage({
-            message: "Username or Password Incorrect",
-            type: 'error'
-          });
-        }, 2000);
-      }).finally(() => {
-        loginLoading.value = false;
-      });
-    };
-    const successLogin = () => {
-      loginLoading.value = false;
-      showLoginDialog.value = false;
-      isLogin.value = true;
-    };
-    /**
-     * Handles the user registration operation.
-     * @return void
-     */
-    const handleRegister = () => {
-      // Registration logic can be added here
-      axios.post(baseUrl + '/user/register', {
-          successLogin
-      })
-    };
-
-    /**
+        /**
      * Creates a video player with a specified video element ID and stream URL.
      * @param videoId ID of the video element
      * @param streamUrl URL of the video stream
@@ -404,21 +290,27 @@ export default {
      * @return void
      */
     onMounted(async () => {
+      if (!Cookies.get('isLogin')){
+        await useRouter().push('/login')
+      }
       await getUrl();
+
     });
 
     return {
       loginForm,
       registerForm,
-      handleLogin,
-      handleRegister,
       activeTab,
       handleClose,
       showLoginDialog,
       loginLoading,
       isLogin,
       loginMethod,
-      handelSendCode
+      inputColor,
+      sendOTPLoading,
+      isCountingDown,
+      countdown,
+
     };
   },
   data() {

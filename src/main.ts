@@ -13,6 +13,7 @@ import Vue3DraggableResizable from 'vue3-draggable-resizable'
 import 'vue3-draggable-resizable/dist/Vue3DraggableResizable.css'
 
 import Cookies from 'js-cookie'
+import LoginComponents from '@/components/LoginComponents.vue'
 const app = createApp(App)
 
 // Create Vuex store for centralized state management
@@ -48,6 +49,12 @@ const router = createRouter({
       path: '/replayList', // Route for the replay list page
       name: 'Replays',
       component: StreamComponents // Component to render for the replay list
+    },
+    {
+      path: '/login',
+      name: "Login",
+      component: LoginComponents
+
     }
   ]
 })

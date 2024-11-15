@@ -4,8 +4,9 @@ import { onMounted, ref } from 'vue'
 import Cookies from 'js-cookie'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
-
+import { useRouter } from 'vue-router';
 export default {
+
   methods: {
     ...mapMutations(['checkLogin']), // Map Vuex mutation to check login status
 
@@ -23,6 +24,7 @@ export default {
 
   setup(props, { emit }) {
     const store = useStore(); // Access the Vuex store instance
+    const router = useRouter()
 
     // Run on component mount to check if the user is logged in
     onMounted(async () => {
@@ -55,8 +57,17 @@ export default {
               message: 'Auto Logged In',
               type: 'success',
             });
+          } else {
+            router.push('/login'); // Navigate to /login if login is unsuccessful
+            Cookies.remove('token');
+
           }
         });
+      } else {
+        router.push('/login'); // Navigate to /login if no token exists
+
+
+
       }
     };
 
@@ -66,15 +77,21 @@ export default {
      * @return void
      */
     const successLogin = () => {
-      store.commit('setStateValue', { key: 'isLogin', value: true }); // Set login status to true
-      store.commit('setStateValue', { key: 'showLoginDialog', value: false }); // Hide login dialog
-      store.commit('setStateValue', { key: 'loginLoading', value: false }); // Stop loading animation
+      Cookies.set('setLogin', true)
+
     };
+    const handleLogout = () => {
+      Cookies.remove('token');
+      const targetPath = store.state.targetPath || '/login';
+      router.push(targetPath); // 登录后跳转到目标路径
+      store.commit('setLogin', false)
+    }
 
     // Return data and methods to be used in the template
     return {
       activeIndex, // Currently active menu item index
       index, // Home component
+      handleLogout
 
     };
   },
@@ -102,6 +119,7 @@ export default {
         Replays
       </el-menu-item>
     </router-link>
+    <el-button type="danger" style="position:absolute;right: 10px; top: 5px;" @click="handleLogout">Logout</el-button>
   </el-menu>
 </template>
 
